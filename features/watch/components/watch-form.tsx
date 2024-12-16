@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, MouseEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { AlertCircle } from "lucide-react";
 import useSignalStore from "@/app/store/signalStore";
 import { saveConfig, getConfig } from "@/app/actions/config";
 import { toast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { type Config } from "@/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FormSchema = z.object({
   exchange: z.string(),
@@ -45,27 +47,21 @@ export default function WatchForm({
 }: UploadFormProps) {
   const { isWatching, startWebSocket, stopWebSocket } = useSignalStore();
   const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<Error | undefined>();
   const [editMode, setEditMode] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      exchange: "",
+      exchange: exchange || "",
       apiKey: "",
       secret: "",
       demo: true,
     },
   });
 
-  const showEditMode = useMemo(() => {
-    return editMode;
-  }, [editMode]);
-
-  const toggleEdit = () => {
-    setEditMode(true);
-  };
-
   const handleSubmit = async (data: Config): Promise<void> => {
+    console.log(data);
     const response = await saveConfig({ ...data, exchange });
 
     if (response.data) {
@@ -83,28 +79,60 @@ export default function WatchForm({
 
   const onCancel = (e: MouseEvent<HTMLElement>): void => {
     e.preventDefault();
-    setEditMode(false);
     onCancelAction();
+    setEditMode(false);
   };
 
   const onStart = async () => {
-    startWebSocket();
+    startWebSocket(exchange);
+    onCancelAction();
+
+    toast({
+      title: "Monitoring Active",
+      description: `Watching for orders on ${exchange}`,
+    });
+  };
+
+  const onStop = () => {
+    stopWebSocket();
+    onCancelAction();
+
+    toast({
+      title: "Monitoring Stopped",
+      description: `You have stopped watching for orders on ${exchange}.`,
+    });
   };
 
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const { data } = await getConfig(exchange);
+        const { data, error } = await getConfig(exchange);
+        console.log(data);
+
+        if (error) {
+          throw new Error(error);
+        }
 
         form.reset({
+          exchange: exchange,
           apiKey: data.apiKey,
           secret: data.secret,
           demo: data.demo,
         });
 
+        setEditMode(false);
         setIsConnected(true);
       } catch (error) {
-        console.log("error", error);
+        if (error instanceof Error) {
+          console.log("error", error);
+
+          setError(error);
+          toast({
+            title: "Configuration Not Found!",
+            description: `Add your exchange information in Oppenheimer`,
+          });
+        }
+
         setIsConnected(false);
         setEditMode(true);
       }
@@ -113,6 +141,14 @@ export default function WatchForm({
     fetchConfig();
   }, [form, exchange]);
 
+  const showEditMode = useMemo(() => {
+    return editMode;
+  }, [editMode]);
+
+  const toggleEdit = () => {
+    setEditMode(true);
+  };
+
   return (
     <div>
       {!showEditMode ? (
@@ -120,7 +156,7 @@ export default function WatchForm({
           <div className="w-full text-center py-20">
             {isConnected && (
               <Button variant="link" onClick={toggleEdit}>
-                Edit Connection
+                Edit Configuration
               </Button>
             )}
           </div>
@@ -130,7 +166,7 @@ export default function WatchForm({
             </Button>
             <Button
               className="w-full"
-              onClick={stopWebSocket}
+              onClick={onStop}
               disabled={!isWatching}
               variant="secondary"
             >

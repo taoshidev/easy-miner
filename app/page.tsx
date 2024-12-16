@@ -1,11 +1,12 @@
 "use client";
 
-import {useEffect} from "react";
+import { useEffect } from "react";
 
-import { last } from 'lodash';
+import { last } from "lodash";
 
-import { useToast } from "@/hooks/use-toast"
-import { Signal } from '@/types';
+import { useToast } from "@/hooks/use-toast";
+import { Signal } from "@/types";
+import { toastContent } from "@/utils";
 
 import useSignalStore from "@/app/store/signalStore";
 
@@ -18,39 +19,34 @@ export default function Home() {
   const { toast } = useToast();
   const { signals } = useSignalStore();
 
-  const toastDesc = (signal: Signal) => {
-    return `${signal.orderType}:${signal.trade_pair.trade_pair} Lvg: ${signal.leverage}`;
-  };
-
   useEffect(() => {
     if (signals.length) {
-
-      toast({
-        title: 'Sent to PTN',
-        description: toastDesc(last(signals) as Signal),
-      });
+      toast(toastContent(last(signals) as Signal));
     }
   }, [toast, signals]);
 
   return (
-    <div className="flex flex-col items-center justify-items-center -8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+    <div className="h-full flex flex-col items-center justify-items-center -8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex gap-8 row-start-2 items-center sm:items-start">
-        <div className='w-[500px]'>
-          <div className='text-center my-20 font-edu text-md text-[#EA4436]'>easy miner</div>
+        <div className="w-[500px]">
+          <div className="text-center my-10 font-edu text-md text-[#EA4436]">
+            easy miner
+          </div>
 
-          <Tabs defaultValue="miner" className="w-full">
+          <Tabs defaultValue="watch" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="miner">Start Miner</TabsTrigger>
               <TabsTrigger value="watch">Watch Signals</TabsTrigger>
+              <TabsTrigger value="miner" disabled>
+                Start Miner
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="miner">
-              <Start />
-            </TabsContent>
             <TabsContent value="watch">
               <Watch />
             </TabsContent>
+            <TabsContent value="miner">
+              <Start />
+            </TabsContent>
           </Tabs>
-
         </div>
       </main>
     </div>

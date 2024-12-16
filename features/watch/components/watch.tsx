@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { PrismAsyncLight as SyntaxHighlighter } from "react-syntax-highlighter";
+import { a11yDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { upperCase } from "lodash";
+import { CircleCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,12 +14,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -25,120 +31,161 @@ import {
 } from "@/components/ui/dialog";
 import WatchForm from "@/features/watch/components/watch-form";
 
-import { useToast } from "@/hooks/use-toast";
-
 import useSignalStore from "@/app/store/signalStore";
-
-import { type Config } from "@/types";
+import { EXCHANGES } from "@/constants";
+import { cn } from "@/lib/utils";
+import { formatDate } from "@/utils";
+import { ExchangeInfo, Signal } from "@/types";
 
 export default function Watch() {
-  const { signals } = useSignalStore();
-  const [editMode, setEditMode] = useState(false);
-  const [data, setData] = useState<Config>();
+  const { signals, exchange: currentExchange } = useSignalStore();
   const [openDialog, setOpenDialog] = useState<string | null>(null);
-
-  const showEditMode = useMemo(() => {
-    return editMode || !data;
-  }, [editMode, data]);
 
   const handleDialogToggle = (dialog: string | null) => {
     setOpenDialog(dialog);
   };
 
+  const disabledTrigger = useCallback(
+    (exchange: ExchangeInfo) => {
+      return !!(currentExchange && currentExchange !== exchange.name);
+    },
+    [currentExchange],
+  );
+
   return (
-    <>
+    <div>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Bybit</CardTitle>
+          <CardTitle>Watch Signals</CardTitle>
           <CardDescription>
-            {showEditMode
-              ? "Add your Bybit account"
-              : "Bybit account configured"}
+            Set Up Your Exchange or Start Monitoring Orders
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <Dialog
-              open={openDialog === "bybit"}
-              onOpenChange={() =>
-                handleDialogToggle(openDialog ? null : "bybit")
-              }
-            >
-              <DialogTrigger className="flex-1 rounded-md border px-4 py-2 font-mono text-sm shadow-sm">
-                Bybit
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Your Bybit API Keys</DialogTitle>
-                  <DialogDescription>
-                    Consectetur deserunt cillum officia in reprehenderit irure
-                    amet id anim nostrud irure nisi proident consectetur
-                    reprehenderit.
-                  </DialogDescription>
-                </DialogHeader>
-                <WatchForm
-                  exchange="bybit"
-                  onSubmitAction={() =>
-                    handleDialogToggle(openDialog ? null : "bybit")
-                  }
-                  onCancelAction={() => handleDialogToggle(null)}
-                />
-              </DialogContent>
-            </Dialog>
-            <Dialog
-              open={openDialog === "mexc"}
-              onOpenChange={() =>
-                handleDialogToggle(openDialog ? null : "mexc")
-              }
-            >
-              <DialogTrigger className="flex-1 rounded-md border px-4 py-2 font-mono text-sm shadow-sm">
-                Mexc
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Your Mexc API Keys</DialogTitle>
-                  <DialogDescription>
-                    Consectetur deserunt cillum officia in reprehenderit irure
-                    amet id anim nostrud irure nisi proident consectetur
-                    reprehenderit.
-                  </DialogDescription>
-                </DialogHeader>
-                <WatchForm
-                  exchange="mexc"
-                  onSubmitAction={() =>
-                    handleDialogToggle(openDialog ? null : "mexc")
-                  }
-                  onCancelAction={() => handleDialogToggle(null)}
-                />
-              </DialogContent>
-            </Dialog>
+          <div className="flex flex-wrap gap-4">
+            {EXCHANGES.map((exchange) => (
+              <Dialog
+                key={exchange.name}
+                open={openDialog === exchange.name}
+                onOpenChange={() =>
+                  handleDialogToggle(openDialog ? null : exchange.name)
+                }
+              >
+                <DialogTrigger
+                  disabled={disabledTrigger(exchange)}
+                  className={cn(
+                    "flex-1 rounded-md border px-4 py-2 border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+                    disabledTrigger(exchange) &&
+                      "opacity-50 cursor-not-allowed",
+                  )}
+                >
+                  <div className="flex justify-center items-center gap-2">
+                    <div className="text-xs">{upperCase(exchange.name)}</div>
+                    {currentExchange === exchange.name && (
+                      <CircleCheck size={14} className="text-green-500">
+                        connected
+                      </CircleCheck>
+                    )}
+                  </div>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{exchange.title}</DialogTitle>
+                    <DialogDescription>
+                      {exchange.description}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <WatchForm
+                    exchange={exchange.name}
+                    onSubmitAction={() =>
+                      handleDialogToggle(openDialog ? null : exchange.name)
+                    }
+                    onCancelAction={() => handleDialogToggle(null)}
+                  />
+                </DialogContent>
+              </Dialog>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      <Sheet>
-        <SheetTrigger className="text-xs text-center w-full mt-4 hover:underline hover:cursor-pointer">
+      <Dialog>
+        <DialogTrigger className="text-xs text-center w-full mt-4 hover:underline hover:cursor-pointer">
           View Recent Signals
-        </SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle className="mb-6">Recent Signals</SheetTitle>
-            <div>
-              {signals.map((signal, index) => (
-                <Card key={index} className="mb-4">
-                  <CardHeader>
-                    <CardTitle>Signal sent to PTN </CardTitle>
-                    <CardDescription>
-                      {signal.orderType}:{signal.trade_pair.trade_pair} Lvg:{" "}
-                      {signal.leverage}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>
-    </>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl">
+          <div className="mx-auto w-full">
+            <DialogHeader className="mb-4">
+              <DialogTitle>Recent Signals</DialogTitle>
+              <DialogDescription>
+                View your most recent signals.
+              </DialogDescription>
+            </DialogHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Trade Pair</TableHead>
+                  <TableHead className="text-xs">Trade Type</TableHead>
+                  <TableHead className="text-xs">Order Type</TableHead>
+                  <TableHead className="text-xs">Direction</TableHead>
+                  <TableHead className="text-xs">Time</TableHead>
+                  <TableHead className="text-xs">Order Status</TableHead>
+                  <TableHead className="text-xs">PTN Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {signals
+                  .slice()
+                  .reverse()
+                  .map((signal: Signal, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="text-xs">{signal.symbol}</TableCell>
+                      <TableCell className="text-xs">
+                        {signal.info.category}
+                      </TableCell>
+                      <TableCell className="text-xs">{signal.type}</TableCell>
+                      <TableCell className="text-xs">{signal.side}</TableCell>
+                      <TableCell className="text-xs">
+                        {formatDate(signal.timestamp)}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {signal.info.orderStatus}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {signal.ptn.error ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="xs" variant="outline">
+                                View Error
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle className="mb-4">
+                                  Error Logs
+                                </DialogTitle>
+                                <DialogDescription asChild>
+                                  <SyntaxHighlighter
+                                    language="bash"
+                                    style={a11yDark}
+                                  >
+                                    {signal.ptn.error}
+                                  </SyntaxHighlighter>
+                                </DialogDescription>
+                              </DialogHeader>
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          signal.ptn.status
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

@@ -48,6 +48,10 @@ export async function getConfig(exchange?: string) {
 
     const result = await response.json();
 
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to get configuration");
+    }
+
     return {
       status: response.status,
       message: result.message || "Configuration retrieved",

@@ -1,12 +1,14 @@
 import { create } from "zustand";
+
 import { WEBSOCKET_URL } from "@/constants";
 import { Signal } from "@/types";
 
 interface SignalsState {
   signals: Signal[];
+  exchange: string;
   isWatching: boolean;
   error: string | null;
-  startWebSocket: () => void;
+  startWebSocket: (exchange: string) => void;
   stopWebSocket: () => void;
   addSignal: (newSignal: Signal[]) => void;
   clearError: () => void;
@@ -18,30 +20,45 @@ const useOrdersStore = create<SignalsState>((set, get) => {
   return {
     signals: [],
     isWatching: false,
+    exchange: "",
     error: null,
 
-    startWebSocket: () => {
+    startWebSocket: (exchange: string) => {
       if (get().isWatching) return;
 
       ws = new WebSocket(WEBSOCKET_URL);
 
       ws.onopen = () => {
         console.log("Socket WebSocket connection opened");
-        set({ isWatching: true, error: null });
+        set({
+          exchange,
+          isWatching: true,
+          error: null,
+        });
       };
 
       ws.onmessage = (event) => {
-        console.log("WebSocket connection message", event.data);
-
         try {
-          const message: Signal = JSON.parse(event.data);
-
-          console.log(message);
+          const message = JSON.parse(event.data);
 
           set((state) => {
-            const newSignal: Signal[] = [message];
+            const existingIndex = state.signals.findIndex(
+              (s) => s.info.orderId === message.data.info.orderId,
+            );
+
+            if (existingIndex >= 0) {
+              const updatedSignals = [...state.signals];
+
+              updatedSignals[existingIndex] = {
+                ...updatedSignals[existingIndex],
+                ...message.data,
+              };
+
+              return { signals: updatedSignals, error: null };
+            }
+
             return {
-              signals: [...state.signals, ...newSignal],
+              signals: [...state.signals, message.data],
               error: null,
             };
           });
@@ -69,7 +86,7 @@ const useOrdersStore = create<SignalsState>((set, get) => {
       if (ws) {
         ws.close();
         ws = null;
-        set({ isWatching: false });
+        set({ isWatching: false, exchange: "" });
       }
     },
 

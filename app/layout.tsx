@@ -2,7 +2,7 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Edu_AU_VIC_WA_NT_Pre } from 'next/font/google'
+import { Edu_AU_VIC_WA_NT_Pre } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
@@ -17,12 +17,11 @@ const geistMono = localFont({
 });
 
 const edu = Edu_AU_VIC_WA_NT_Pre({
-  subsets: ['latin'],
-  display: 'swap',
+  subsets: ["latin"],
+  display: "swap",
   variable: "--font-edu",
   weight: "500",
-})
-
+});
 
 export const metadata: Metadata = {
   title: "easy miner",
