@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo, MouseEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AlertCircle } from "lucide-react";
 import useSignalStore from "@/app/store/signalStore";
 import { saveConfig, getConfig } from "@/app/actions/config";
 import { toast } from "@/hooks/use-toast";
@@ -18,10 +17,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { type Config } from "@/types";
+import { type ExchangeConfig } from "@/types";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FormSchema = z.object({
   exchange: z.string(),
@@ -47,7 +45,7 @@ export default function WatchForm({
 }: UploadFormProps) {
   const { isWatching, startWebSocket, stopWebSocket } = useSignalStore();
   const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<Error | undefined>();
+  const [, setError] = useState<Error | undefined>();
   const [editMode, setEditMode] = useState(false);
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -60,9 +58,8 @@ export default function WatchForm({
     },
   });
 
-  const handleSubmit = async (data: Config): Promise<void> => {
-    console.log(data);
-    const response = await saveConfig({ ...data, exchange });
+  const handleSubmit = async (data: ExchangeConfig) => {
+    const response = await saveConfig(data);
 
     if (response.data) {
       toast({
@@ -106,7 +103,7 @@ export default function WatchForm({
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const { data, error } = await getConfig(exchange);
+        const { data, error } = await getConfig();
         console.log(data);
 
         if (error) {
@@ -190,6 +187,7 @@ export default function WatchForm({
               )}
             />
             <FormField
+              disabled
               control={form.control}
               name="apiKey"
               render={({ field }) => (
@@ -203,6 +201,7 @@ export default function WatchForm({
               )}
             />
             <FormField
+              disabled
               control={form.control}
               name="secret"
               render={({ field }) => (
@@ -225,9 +224,10 @@ export default function WatchForm({
                 name="demo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormControl>
+                    <FormControl >
                       <div className="flex justify-end items-center space-x-2">
                         <Switch
+                          disabled
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />

@@ -8,11 +8,16 @@ export interface ExchangeInfo {
   description: string;
 }
 
-export interface Config {
-  exchange: string;
+export interface ExchangeConfig {
   apiKey: string;
   secret: string;
   demo: boolean;
+}
+
+export interface Config {
+  exchange: string;
+  [key: string]: ExchangeConfig;
+
 }
 
 export interface PTN {

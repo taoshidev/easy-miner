@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import {useState, useCallback, useMemo, useEffect} from "react";
 import { PrismAsyncLight as SyntaxHighlighter } from "react-syntax-highlighter";
 import { a11yDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { upperCase } from "lodash";
+import { upperCase, find } from "lodash";
 import { CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,11 +35,13 @@ import useSignalStore from "@/app/store/signalStore";
 import { EXCHANGES } from "@/constants";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/utils";
-import { ExchangeInfo, Signal } from "@/types";
+import {Config, ExchangeInfo, Signal} from "@/types";
+import {getConfig} from "@/app/actions/config";
 
 export default function Watch() {
   const { signals, exchange: currentExchange } = useSignalStore();
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [config, setConfig] = useState<Config | null>(null);
 
   const handleDialogToggle = (dialog: string | null) => {
     setOpenDialog(dialog);
@@ -52,6 +54,32 @@ export default function Watch() {
     [currentExchange],
   );
 
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const { data } = await getConfig();
+
+      setConfig(data);
+    }
+
+
+    if (!config) {
+      fetchConfig();
+    }
+
+  }, [getConfig])
+
+  const currentExchangeInfo = useMemo(() => {
+    if (!config?.exchange || !EXCHANGES.length) return null;
+    const foundExchange = find(EXCHANGES, (ex) => ex.name.toLowerCase() === config.exchange.toLowerCase());
+    return foundExchange || null;
+  }, [config?.exchange]);
+
+  if (!config?.exchange || !currentExchangeInfo) {
+    return null;
+  }
+
+
   return (
     <div>
       <Card className="w-full">
@@ -63,25 +91,23 @@ export default function Watch() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
-            {EXCHANGES.map((exchange) => (
               <Dialog
-                key={exchange.name}
-                open={openDialog === exchange.name}
+                open={openDialog === currentExchangeInfo.name}
                 onOpenChange={() =>
-                  handleDialogToggle(openDialog ? null : exchange.name)
+                  handleDialogToggle(openDialog ? null : currentExchangeInfo.name)
                 }
               >
                 <DialogTrigger
-                  disabled={disabledTrigger(exchange)}
+                  disabled={disabledTrigger(currentExchangeInfo)}
                   className={cn(
                     "flex-1 rounded-md border px-4 py-2 border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-                    disabledTrigger(exchange) &&
-                      "opacity-50 cursor-not-allowed",
+                    disabledTrigger(currentExchangeInfo) &&
+                    "opacity-50 cursor-not-allowed",
                   )}
                 >
                   <div className="flex justify-center items-center gap-2">
-                    <div className="text-xs">{upperCase(exchange.name)}</div>
-                    {currentExchange === exchange.name && (
+                    <div className="text-xs">{upperCase(currentExchangeInfo.name)}</div>
+                    {currentExchange === currentExchangeInfo.name && (
                       <CircleCheck size={14} className="text-green-500">
                         connected
                       </CircleCheck>
@@ -89,22 +115,21 @@ export default function Watch() {
                   </div>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{exchange.title}</DialogTitle>
-                    <DialogDescription>
-                      {exchange.description}
-                    </DialogDescription>
+                <DialogHeader>
+                  <DialogTitle>{currentExchangeInfo.title}</DialogTitle>
+                  <DialogDescription>
+                    {currentExchangeInfo.description}
+                  </DialogDescription>
                   </DialogHeader>
                   <WatchForm
-                    exchange={exchange.name}
+                    exchange={currentExchangeInfo.name}
                     onSubmitAction={() =>
-                      handleDialogToggle(openDialog ? null : exchange.name)
+                      handleDialogToggle(openDialog ? null : currentExchangeInfo.name)
                     }
                     onCancelAction={() => handleDialogToggle(null)}
                   />
                 </DialogContent>
               </Dialog>
-            ))}
           </div>
         </CardContent>
       </Card>
