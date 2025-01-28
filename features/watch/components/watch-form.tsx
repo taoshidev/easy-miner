@@ -129,7 +129,7 @@ export default function WatchForm({
           setError(error);
           toast({
             title: "Configuration Not Found!",
-            description: `Add your exchange information in Oppenheimer`,
+            description: `Add your exchange information in config`,
           });
         }
 
