@@ -1,8 +1,10 @@
 "use server";
 
-import { API_URL } from '@/constants'
+import { type MinerData } from "@/types";
 
-export async function startMiner(data) {
+const API_URL = process.env.API_URL;
+
+export async function startMiner(data: MinerData) {
   console.log("Received Data:", data);
 
   try {

@@ -1,9 +1,10 @@
 "use server";
 
-import { API_URL } from "@/constants";
-import { type Config } from "@/types";
+import { type ExchangeConfig} from "@/types";
 
-export async function saveConfig(data: Config) {
+const API_URL = process.env.API_URL;
+
+export async function saveConfig(data: ExchangeConfig) {
   try {
     const response = await fetch(`${API_URL}/save-config`, {
       method: "POST",

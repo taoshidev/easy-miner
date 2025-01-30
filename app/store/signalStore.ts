@@ -1,7 +1,8 @@
 import { create } from "zustand";
 
-import { WEBSOCKET_URL } from "@/constants";
 import { Signal } from "@/types";
+
+const WEBSOCKET_URL = process.env.WEBSOCKET_URL;
 
 interface SignalsState {
   signals: Signal[];
@@ -24,7 +25,7 @@ const useOrdersStore = create<SignalsState>((set, get) => {
     error: null,
 
     startWebSocket: (exchange: string) => {
-      if (get().isWatching) return;
+      if (!WEBSOCKET_URL || get().isWatching) return;
 
       ws = new WebSocket(WEBSOCKET_URL);
 

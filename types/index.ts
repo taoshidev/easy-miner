@@ -1,9 +1,15 @@
-import { Trade } from "ccxt";
+import { Trade, exchanges } from "ccxt";
 
-export type ExchangeName = "bybit" | "mexc" | "okx" | "binance" | "coinbase";
+
+export interface MinerData {
+  testnet: boolean;
+  wallet: string;
+  debug: boolean;
+  dashboard: boolean;
+}
 
 export interface ExchangeInfo {
-  name: ExchangeName;
+  name: typeof exchanges;
   title: string;
   description: string;
 }
@@ -16,8 +22,7 @@ export interface ExchangeConfig {
 
 export interface Config {
   exchange: string;
-  [key: string]: ExchangeConfig;
-
+  [key: string]: string | ExchangeConfig;
 }
 
 export interface PTN {

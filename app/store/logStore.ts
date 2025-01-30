@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { WEBSOCKET_URL } from "@/constants";
 import { Config } from '@/types'
 
 interface WebSocketMessage {
@@ -18,6 +17,8 @@ interface LogStore {
   clearError: () => void;
 }
 
+const WEBSOCKET_URL = process.env.WEBSOCKET_URL;
+
 const useLogStore = create<LogStore>((set, get) => {
   let ws: WebSocket | null = null;
 
@@ -27,7 +28,7 @@ const useLogStore = create<LogStore>((set, get) => {
     error: null,
 
     initialize: () => {
-      if (get().isWatching) return;
+      if (!WEBSOCKET_URL || get().isWatching) return;
 
       ws = new WebSocket(WEBSOCKET_URL);
 
