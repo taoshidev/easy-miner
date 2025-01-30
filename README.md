@@ -74,8 +74,8 @@ pnpm install
 3. Configure environment variables: Create a `.env` file in the root directory:
 
 ```bash
-NEXT_PUBLIC_API_URL="http://localhost:8080/api"
-NEXT_PUBLIC_WEBSOCKET_URL="ws://localhost:8080"
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+NEXT_PUBLIC_WEBSOCKET_URL=ws://localhost:8080
 ```
 
 4. Start the development server:

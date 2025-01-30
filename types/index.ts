@@ -1,6 +1,5 @@
 import { Trade, exchanges } from "ccxt";
 
-
 export interface MinerData {
   testnet: boolean;
   wallet: string;
@@ -9,7 +8,7 @@ export interface MinerData {
 }
 
 export interface ExchangeInfo {
-  name: typeof exchanges;
+  name: keyof typeof exchanges;
   title: string;
   description: string;
 }

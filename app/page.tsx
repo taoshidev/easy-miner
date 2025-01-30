@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-
 import { last } from "lodash";
+import Image from 'next/image'
 
 import { useToast } from "@/hooks/use-toast";
 import { Signal } from "@/types";
@@ -29,8 +29,17 @@ export default function Home() {
     <div className="h-full flex flex-col items-center justify-items-center -8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex gap-8 row-start-2 items-center sm:items-start">
         <div className="w-[500px]">
-          <div className="text-center my-10 font-edu text-md text-[#EA4436]">
-            easy miner
+          <div className="my-10 flex flex-col justify-center items-center">
+            <Image
+              className='mb-4'
+              src="/easy-miner.png"
+              width={75}
+              height={65}
+              alt="easy miner logo"
+            />
+            <div>
+              <p className='text-xs italic text-muted-foreground'>let&apos;s make it easy.</p>
+            </div>
           </div>
 
           <Tabs defaultValue="watch" className="w-full">

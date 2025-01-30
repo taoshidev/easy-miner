@@ -67,17 +67,13 @@ export default function Watch() {
       fetchConfig();
     }
 
-  }, [getConfig])
+  }, [config])
 
   const currentExchangeInfo = useMemo(() => {
     if (!config?.exchange || !EXCHANGES.length) return null;
     const foundExchange = find(EXCHANGES, (ex) => ex.name.toLowerCase() === config.exchange.toLowerCase());
     return foundExchange || null;
   }, [config?.exchange]);
-
-  if (!config?.exchange || !currentExchangeInfo) {
-    return null;
-  }
 
 
   return (
@@ -90,7 +86,15 @@ export default function Watch() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4">
+          {(!config?.exchange || !currentExchangeInfo) ? (
+            <div className="w-full my-20">
+              <div className="text-center">
+                <p className='text-[#FF3F19] mb-2'>no exchange found.</p>
+                <p className='text-xs'>ensure an exchange is set in your configuration.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-4">
               <Dialog
                 open={openDialog === currentExchangeInfo.name}
                 onOpenChange={() =>
@@ -115,11 +119,11 @@ export default function Watch() {
                   </div>
                 </DialogTrigger>
                 <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>{currentExchangeInfo.title}</DialogTitle>
-                  <DialogDescription>
-                    {currentExchangeInfo.description}
-                  </DialogDescription>
+                  <DialogHeader>
+                    <DialogTitle>{currentExchangeInfo.title}</DialogTitle>
+                    <DialogDescription>
+                      {currentExchangeInfo.description}
+                    </DialogDescription>
                   </DialogHeader>
                   <WatchForm
                     exchange={currentExchangeInfo.name}
@@ -130,7 +134,9 @@ export default function Watch() {
                   />
                 </DialogContent>
               </Dialog>
-          </div>
+            </div>
+          )}
+
         </CardContent>
       </Card>
 
