@@ -1,8 +1,22 @@
 "use server";
 
-import { type ExchangeConfig} from "@/types";
+import { type ExchangeConfig } from "@/types";
 
 const API_URL = process.env.API_URL;
+
+const config = {
+  port: 8080,
+  "signal-server": "http://127.0.0.1:3005",
+  "ptn-path":
+    "/Users/kenneth/Projects/taoshi/KenTensor/proprietary-trading-network",
+  exchange: "mexc",
+  mexc: {
+    apiKey: "mx0vglvJuWdImkwR7O",
+    secret: "6996d47878d64942a0b5eb528206dc11",
+    market: "spot",
+    demo: false,
+  },
+};
 
 export async function saveConfig(data: ExchangeConfig) {
   try {
@@ -35,6 +49,12 @@ export async function saveConfig(data: ExchangeConfig) {
 }
 
 export async function getConfig(exchange?: string) {
+  return {
+    status: 200,
+    message: "Configuration retrieved",
+    data: config,
+  };
+
   try {
     const url = exchange
       ? `${API_URL}/get-config?exchange=${exchange}`
